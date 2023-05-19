@@ -38,34 +38,33 @@
 
 
 ;; Customizable variables
-(defgroup eff-mode nil "ELF mode customizable variables")
+(defgroup eff-mode nil "EFF mode customizable variables.")
 
 (defcustom eff-mode-md5sum "md5sum"
-  "md5 sum executable name or path"
+  "MD5 sum executable name or path."
   :type 'string
   :group 'eff-mode)
 
 (defcustom eff-mode-readelf "readelf"
-  "readelf executable name or path"
+   "The readelf executable name or path."
   :type 'string
   :group 'eff-mode)
 
 (defcustom eff-mode-strings "strings"
-  "strings executable name or path"
+  "The strings executable name or path."
   :type 'string
   :group 'eff-mode)
 
 (defcustom eff-mode-buffer-initial-type 'dynamic
-  "The initial state of an ELF buffer"
+  "The initial state of an ELF buffer."
   :type 'symbol
   :group 'eff-mode)
 
 (defcustom eff-mode-use-local-toolchain t
-  "Use a toolchain on local or remote machine
+  "Use a toolchain on local or remote machine.
 
   TODO: Using toolchains remotely is not implemented, required commit
-  https://github.com/emacs-mirror/emacs/commit/83b1db043b44a8efb091ced873eab686e671c5ac
-  "
+  https://github.com/emacs-mirror/emacs/commit/83b1db043b44a8efb091ced873eab686e671c5ac"
   :type 'boolean
   :group 'eff-mode)
 
@@ -166,6 +165,7 @@ Each element has the form (E_MACHINE . GDB).
         (overlay-put ol 'size size)))))
 
 (defun elf-revert-buffer ()
+  "Revert buffer with ELF-specific modes."
   (interactive)
   (when (eq 'eff-mode major-mode)
     (let* ((state (cdr (assoc eff-mode-buffer-type eff-mode-buffer-types)))
@@ -217,7 +217,7 @@ Each element has the form (E_MACHINE . GDB).
          (kill-buffer stderr))))))
 
 (defun eff-mode-disassemble (overlay)
-  "Mode for disassembled code"
+  "Mode for disassembled code for a symbols OVERLAY."
   (let* ((symbol (overlay-get overlay 'symbol))
          (buffer-name (format "%s(%s)" (buffer-name) symbol))
          (file-name (eff-mode-buffer-file-name))
@@ -243,6 +243,7 @@ Each element has the form (E_MACHINE . GDB).
       (read-only-mode))))
 
 (defun eff-mode-binary (overlay)
+  "Mode for hex dump for a sections OVERLAY."
   (let* ((section (overlay-get overlay 'section))
          (offset (overlay-get overlay 'offset))
          (size (overlay-get overlay 'size))
@@ -267,6 +268,7 @@ Each element has the form (E_MACHINE . GDB).
 (suppress-keymap eff-mode-map)
 
 (defmacro eff-mode-create-key-binding (arg)
+  "Create a mode key function for ARG state."
   `(defun ,(intern (concat "eff-mode-" arg)) ()
      "Macro-generated key-binding function that changes buffer type"
      (interactive)
@@ -285,7 +287,6 @@ Each element has the form (E_MACHINE . GDB).
 
 ;;;###autoload
 (define-derived-mode eff-mode special-mode "Elf"
-  "TODO"
   :syntax-table eff-mode-syntax-table
   (buffer-disable-undo)
   (elf-revert-buffer))
