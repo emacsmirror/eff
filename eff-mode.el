@@ -38,7 +38,7 @@
 
 
 ;; Customizable variables
-(defgroup eff-mode nil "EFF mode customizable variables.")
+(defgroup eff-mode nil "EFF mode customizable variables." :group 'tools)
 
 (defcustom eff-mode-md5sum "md5sum"
   "MD5 sum executable name or path."
@@ -275,7 +275,7 @@ Each element has the form (E_MACHINE . GDB).
      (setq eff-mode-buffer-type (intern ,arg))
      (elf-revert-buffer)))
 
-(mapcar
+(mapc
  (lambda (x)
    (let* ((key (cdr (assoc 'key x)))
           (state-name (car x)))
