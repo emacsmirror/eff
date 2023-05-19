@@ -36,33 +36,27 @@
 
 (eval-when-compile (require 'subr-x))
 
-;; Constants
-;; TODO: change to defcustom
-(defconst elf-mode-buffer-types
-  '((arch-specific   . ((key . "A") (command . ("readelf" "-W" "--arch-specific"))))
-    (archive-index   . ((key . "c") (command . ("readelf" "-W" "--archive-index"))))
-    (dynamic         . ((key . "d") (command . ("readelf" "-W" "--dynamic"))))
-    (headers         . ((key . "e") (command . ("readelf" "-W" "--headers"))))
-    (section-groups  . ((key . "G") (command . ("readelf" "-W" "--section-groups"))))
-    (header          . ((key . "h") (command . ("readelf" "-W" "--file-header"))))
-    (histogram       . ((key . "I") (command . ("readelf" "-W" "--histogram"))))
-    (program-headers . ((key . "l") (command . ("readelf" "-W" "--program-headers"))))
-    (md5sum          . ((key . "m") (command . ("md5sum"))))
-    (notes           . ((key . "n") (command . ("readelf" "-W" "--notes"))))
-    (relocs          . ((key . "r") (command . ("readelf" "-W" "--relocs"))))
-    (section-headers . ((key . "S") (command . ("readelf" "-W" "--section-headers"))))
-    (symbols         . ((key . "s") (command . ("readelf" "-W" "--symbols"))))
-    (unwind          . ((key . "u") (command . ("readelf" "-W" "--unwind"))))
-    (version-info    . ((key . "V") (command . ("readelf" "-W" "--version-info"))))
-    (dyn-syms        . ((key . "x") (command . ("readelf" "-W" "--dyn-syms"))))
-    (strings         . ((key . "z") (command . ("strings"))))
-))
 
 ;; Customizable variables
 (defgroup elf-mode nil "ELF mode customizable variables")
 
+(defcustom elf-mode-md5sum "md5sum"
+  "md5 sum executable name or path"
+  :type 'string
+  :group 'elf-mode)
+
+(defcustom elf-mode-readelf "readelf"
+  "readelf executable name or path"
+  :type 'string
+  :group 'elf-mode)
+
+(defcustom elf-mode-strings "strings"
+  "strings executable name or path"
+  :type 'string
+  :group 'elf-mode)
+
 (defcustom elf-mode-buffer-initial-type 'dynamic
-  "The initiaial state of an ELF buffer"
+  "The initial state of an ELF buffer"
   :type 'symbol
   :group 'elf-mode)
 
@@ -108,6 +102,30 @@ Each element has the form (E_MACHINE . GDB).
 
 (defvar-local elf-mode-binary-command
   "dd status=none bs=1 skip=%s count=%s if=%s")
+
+(defvar-local asm-comment-char ?#)
+
+
+;; Constants
+(defconst elf-mode-buffer-types
+  `((arch-specific   . ((key . "A") (command . ,(append (split-string elf-mode-readelf) '("-W" "--arch-specific")))))
+    (archive-index   . ((key . "c") (command . ,(append (split-string elf-mode-readelf) '("-W" "--archive-index")))))
+    (dynamic         . ((key . "d") (command . ,(append (split-string elf-mode-readelf) '("-W" "--dynamic")))))
+    (headers         . ((key . "e") (command . ,(append (split-string elf-mode-readelf) '("-W" "--headers")))))
+    (section-groups  . ((key . "G") (command . ,(append (split-string elf-mode-readelf) '("-W" "--section-groups")))))
+    (header          . ((key . "h") (command . ,(append (split-string elf-mode-readelf) '("-W" "--file-header")))))
+    (histogram       . ((key . "I") (command . ,(append (split-string elf-mode-readelf) '("-W" "--histogram")))))
+    (program-headers . ((key . "l") (command . ,(append (split-string elf-mode-readelf) '("-W" "--program-headers")))))
+    (md5sum          . ((key . "m") (command . ,(split-string elf-mode-md5sum))))
+    (notes           . ((key . "n") (command . ,(append (split-string elf-mode-readelf) '("-W" "--notes")))))
+    (relocs          . ((key . "r") (command . ,(append (split-string elf-mode-readelf) '("-W" "--relocs")))))
+    (section-headers . ((key . "S") (command . ,(append (split-string elf-mode-readelf) '("-W" "--section-headers")))))
+    (symbols         . ((key . "s") (command . ,(append (split-string elf-mode-readelf) '("-W" "--symbols")))))
+    (unwind          . ((key . "u") (command . ,(append (split-string elf-mode-readelf) '("-W" "--unwind")))))
+    (version-info    . ((key . "V") (command . ,(append (split-string elf-mode-readelf) '("-W" "--version-info")))))
+    (dyn-syms        . ((key . "x") (command . ,(append (split-string elf-mode-readelf) '("-W" "--dyn-syms")))))
+    (strings         . ((key . "z") (command . ,(split-string elf-mode-strings))))
+))
 
 
 ;;
@@ -171,14 +189,14 @@ Each element has the form (E_MACHINE . GDB).
        :noquery t
        :command (append command `(,(file-name-nondirectory file-name)))
        :filter
-       (lambda (proc _msg)
+       (lambda (_proc msg)
          (when (buffer-live-p stdout)
            (with-current-buffer stdout
              (setq-local inhibit-read-only t)
              (goto-char (point-max))
-             (insert _msg))))
+             (insert msg))))
        :sentinel
-       (lambda (proc event)
+       (lambda (_proc event)
          (with-current-buffer stdout
            (when (string= event "finished\n")
              (cond
