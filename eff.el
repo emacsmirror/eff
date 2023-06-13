@@ -1,13 +1,12 @@
-;;; eff-mode.el --- Show symbols in Executable File Formats -*- lexical-binding: t -*-
+;;; eff-mode.el --- Show symbols in Executable File Formats -*- lexical-binding: t; mode: emacs-lisp -*-
 
-;; Copyright (C) 2016 Oleh Krehel
 ;; Copyright (C) 2020-2023 Michael Krasnyk
 
-;; Author: Oleh Krehel <ohwoeowho@gmail.com>, Michael Krasnyk <michael.krasnyk@gmail.com>
+;; Michael Krasnyk <michael.krasnyk@gmail.com>
 ;; URL: https://github.com/oxidase/eff-mode
 ;; Package-Requires: ((emacs "28"))
 ;; Version: 1.0
-;; Keywords: elf readelf convenience
+;; Keywords: ELF readelf convenience
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -38,27 +37,30 @@
 
 
 ;; Customizable variables
-(defgroup eff-mode nil "EFF mode customizable variables." :group 'tools)
+(defgroup eff nil "EFF mode customizable variables."
+          :group 'tools
+          :prefix "eff-mode-"
+          :link '(url-link "https://github.com/oxidase/eff-mode"))
 
 (defcustom eff-mode-md5sum "md5sum"
   "MD5 sum executable name or path."
   :type 'string
-  :group 'eff-mode)
+  :group 'eff)
 
 (defcustom eff-mode-readelf "readelf"
    "The readelf executable name or path."
   :type 'string
-  :group 'eff-mode)
+  :group 'eff)
 
 (defcustom eff-mode-strings "strings"
   "The strings executable name or path."
   :type 'string
-  :group 'eff-mode)
+  :group 'eff)
 
 (defcustom eff-mode-buffer-initial-type 'dynamic
   "The initial state of an ELF buffer."
   :type 'symbol
-  :group 'eff-mode)
+  :group 'eff)
 
 (defcustom eff-mode-use-local-toolchain t
   "Use a toolchain on local or remote machine.
@@ -66,7 +68,7 @@
   TODO: Using toolchains remotely is not implemented, required commit
   https://github.com/emacs-mirror/emacs/commit/83b1db043b44a8efb091ced873eab686e671c5ac"
   :type 'boolean
-  :group 'eff-mode)
+  :group 'eff)
 
 (defcustom eff-mode-gdb-alist `(("00b7" . "aarch64-linux-gnu-gdb")
                                 ("0028" . "arm-none-eabi-gdb"))
@@ -77,7 +79,7 @@ Each element has the form (E_MACHINE . GDB).
  GDB pecifies the gdb command for corresponding platform."
   :type '(alist :key-type (string :tag "e_machine id")
           :value-type (string :tag "gdb executable"))
-  :group 'eff-mode)
+  :group 'eff)
 
 
 ;; Faces
@@ -102,7 +104,7 @@ Each element has the form (E_MACHINE . GDB).
 (defvar-local eff-mode-binary-command
   "dd status=none bs=1 skip=%s count=%s if=%s")
 
-(defvar-local asm-comment-char ?#)
+(defvar-local eff-asm-comment-char ?#)
 
 
 ;; Constants
@@ -123,8 +125,7 @@ Each element has the form (E_MACHINE . GDB).
     (unwind          . ((key . "u") (command . ,(append (split-string eff-mode-readelf) '("-W" "--unwind")))))
     (version-info    . ((key . "V") (command . ,(append (split-string eff-mode-readelf) '("-W" "--version-info")))))
     (dyn-syms        . ((key . "x") (command . ,(append (split-string eff-mode-readelf) '("-W" "--dyn-syms")))))
-    (strings         . ((key . "z") (command . ,(split-string eff-mode-strings))))
-))
+    (strings         . ((key . "z") (command . ,(split-string eff-mode-strings))))))
 
 
 ;;
@@ -135,7 +136,7 @@ Each element has the form (E_MACHINE . GDB).
     (tramp-handle-file-local-copy (buffer-file-name)))
    (t (buffer-file-name))))
 
-(defun elf-add-func-refs ()
+(defun eff-elf-add-func-refs ()
   "Add references to disassemble commands for FUNC entries."
   (goto-char (point-min))
   (while (re-search-forward "FUNC[[:space:]]+\\([[:alnum:]]+[[:space:]]+\\)\\{3\\}\\(\\sw+\\)" nil t)
@@ -147,7 +148,7 @@ Each element has the form (E_MACHINE . GDB).
                 'mouse-action #'eff-mode-disassemble)))
       (overlay-put ol 'symbol name))))
 
-(defun elf-add-sections-refs ()
+(defun eff-elf-add-sections-refs ()
   "Add references to hexl commands for header sections."
   (goto-char (point-min))
   (while (re-search-forward "^ *\\[ *[[:digit:]]+] +\\([^ ]+\\) +[^ ]+ +[^ ]+ +\\([^ ]+\\) +\\([^ ]+\\)" nil t)
@@ -164,7 +165,7 @@ Each element has the form (E_MACHINE . GDB).
         (overlay-put ol 'offset offset)
         (overlay-put ol 'size size)))))
 
-(defun elf-revert-buffer ()
+(defun eff-elf-revert-buffer ()
   "Revert buffer with ELF-specific modes."
   (interactive)
   (when (eq 'eff-mode major-mode)
@@ -203,10 +204,10 @@ Each element has the form (E_MACHINE . GDB).
                ((and (not (string= "a" (file-name-extension file-name))) ;; TODO: add offsets for *.o files shown by "ar tO"
                  (or (eq eff-mode-buffer-type 'headers)
                      (eq eff-mode-buffer-type 'section-headers)))
-                (elf-add-sections-refs))
+                (eff-elf-add-sections-refs))
                ((or (eq eff-mode-buffer-type 'dyn-syms)
                     (eq eff-mode-buffer-type 'symbols))
-                (elf-add-func-refs))))
+                (eff-elf-add-func-refs))))
            (goto-char (point-min))
            (set-buffer-modified-p nil)
            (read-only-mode))
@@ -239,7 +240,7 @@ Each element has the form (E_MACHINE . GDB).
           (replace-match (concat offset hex opcode))
           (put-text-property beg2 beg3 'font-lock-face 'eff-mode-disassemble-hex)
           (put-text-property beg3 end3 'font-lock-face 'eff-mode-disassemble-opcode)))
-      (setq-local asm-comment-char ?#)
+      (setq-local eff-asm-comment-char ?#)
       (read-only-mode))))
 
 (defun eff-mode-binary (overlay)
@@ -264,7 +265,7 @@ Each element has the form (E_MACHINE . GDB).
     (modify-syntax-entry ?_ "w" st)
     st))
 
-(setq eff-mode-map (make-keymap))
+(defvar eff-mode-map (make-keymap))
 (suppress-keymap eff-mode-map)
 
 (defmacro eff-mode-create-key-binding (arg)
@@ -273,15 +274,14 @@ Each element has the form (E_MACHINE . GDB).
      "Macro-generated key-binding function that changes buffer type"
      (interactive)
      (setq eff-mode-buffer-type (intern ,arg))
-     (elf-revert-buffer)))
+     (eff-elf-revert-buffer)))
 
 (mapc
  (lambda (x)
    (let* ((key (cdr (assoc 'key x)))
           (state-name (car x)))
      (eval (macroexpand-1 `(eff-mode-create-key-binding ,(symbol-name state-name))))
-     (define-key eff-mode-map key (intern (concat "eff-mode-" (symbol-name state-name))))
-     ))
+     (define-key eff-mode-map key (intern (concat "eff-mode-" (symbol-name state-name))))))
  eff-mode-buffer-types)
 
 
@@ -289,7 +289,7 @@ Each element has the form (E_MACHINE . GDB).
 (define-derived-mode eff-mode special-mode "Elf"
   :syntax-table eff-mode-syntax-table
   (buffer-disable-undo)
-  (elf-revert-buffer))
+  (eff-elf-revert-buffer))
 
 ;;;###autoload
 (add-to-list 'magic-mode-alist '("^\177ELF" . eff-mode))
