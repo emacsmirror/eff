@@ -132,8 +132,6 @@ Each element has the form (E_MACHINE . GDB).
 (defun eff-buffer-file-name ()
   "Get local file name of a buffer."
   (cond
-   ((and eff-use-local-toolchain (fboundp 'tramp-tramp-file-p) (tramp-tramp-file-p (buffer-file-name)))
-    (tramp-handle-file-local-copy (buffer-file-name)))
    (t (buffer-file-name))))
 
 (defun eff-elf-add-func-refs ()
