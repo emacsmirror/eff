@@ -1,6 +1,6 @@
 ;;; eff.el --- Show symbols in Executable File Formats -*- lexical-binding: t; mode: emacs-lisp -*-
 
-;; Copyright (C) 2020-2023 Michael Krasnyk
+;; Copyright (C) 2020-2024 Michael Krasnyk
 
 ;; Michael Krasnyk <michael.krasnyk@gmail.com>
 ;; URL: https://github.com/oxidase/eff
