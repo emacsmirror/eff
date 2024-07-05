@@ -263,23 +263,26 @@ Each element has the form (E_MACHINE . GDB).
     (modify-syntax-entry ?_ "w" st)
     st))
 
-(defvar eff-map (make-keymap))
-(suppress-keymap eff-map)
+(defvar eff-mode-map (make-keymap))
+(suppress-keymap eff-mode-map)
 
-(defmacro eff-create-key-binding (arg)
+(defun eff-create-key-binding (arg)
   "Create a mode key function for ARG state."
-  `(defun ,(intern (concat "eff-" arg)) ()
-     "Macro-generated key-binding function that changes buffer type"
-     (interactive)
-     (setq eff-buffer-type (intern ,arg))
-     (eff-elf-revert-buffer)))
+  (let ((func-name (intern (concat "eff-" arg))))
+    (eval
+     `(defun ,func-name ()
+        "Generated key-binding function that changes buffer type."
+        (interactive)
+        (setq eff-buffer-type (intern ,arg))
+        (eff-elf-revert-buffer)))))
 
 (mapc
  (lambda (x)
    (let* ((key (cdr (assoc 'key x)))
-          (state-name (car x)))
-     (eval (macroexpand-1 `(eff-create-key-binding ,(symbol-name state-name))))
-     (define-key eff-map key (intern (concat "eff-" (symbol-name state-name))))))
+          (state-name (car x))
+          (state-name-str (symbol-name state-name)))
+     (eff-create-key-binding state-name-str)
+     (define-key eff-mode-map key (intern (concat "eff-" state-name-str)))))
  eff-buffer-types)
 
 
