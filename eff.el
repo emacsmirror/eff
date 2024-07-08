@@ -119,6 +119,7 @@ Each element has the form (E_MACHINE . GDB).
     (program-headers . ((key . "l") (command . ,(append (split-string eff-readelf) '("-W" "--program-headers")))))
     (md5sum          . ((key . "m") (command . ,(split-string eff-md5sum))))
     (notes           . ((key . "n") (command . ,(append (split-string eff-readelf) '("-W" "--notes")))))
+    (interpreter     . ((key . "p") (command . ,(append (split-string eff-readelf) '("-W" "--string-dump" ".interp")))))
     (relocs          . ((key . "r") (command . ,(append (split-string eff-readelf) '("-W" "--relocs")))))
     (section-headers . ((key . "S") (command . ,(append (split-string eff-readelf) '("-W" "--section-headers")))))
     (symbols         . ((key . "s") (command . ,(append (split-string eff-readelf) '("-W" "--symbols")))))
